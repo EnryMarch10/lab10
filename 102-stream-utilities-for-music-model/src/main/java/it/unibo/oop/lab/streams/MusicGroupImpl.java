@@ -1,5 +1,6 @@
 package it.unibo.oop.lab.streams;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,42 +32,56 @@ public final class MusicGroupImpl implements MusicGroup {
 
     @Override
     public Stream<String> orderedSongNames() {
-        return null;
+        return songs.stream().map(s -> s.songName).sorted();
     }
 
     @Override
     public Stream<String> albumNames() {
-        return null;
+        return albums.keySet().stream();
     }
 
     @Override
     public Stream<String> albumInYear(final int year) {
-        return null;
+        return albums.entrySet().stream().filter(x -> x.getValue() == year).map(x -> x.getKey());
     }
 
     @Override
     public int countSongs(final String albumName) {
-        return -1;
+        return (int)songs.stream()
+            .filter(x -> x.getAlbumName().isPresent())
+            .filter(x -> x.getAlbumName().get().equals(albumName))
+            .count();
     }
 
     @Override
     public int countSongsInNoAlbum() {
-        return -1;
+        return (int)songs.stream().filter(x -> !x.getAlbumName().isPresent()).count();
     }
 
     @Override
     public OptionalDouble averageDurationOfSongs(final String albumName) {
-        return null;
+        return songs.stream()
+            .filter(x -> x.getAlbumName().isPresent())
+            .filter(x -> x.getAlbumName().get().equals(albumName))
+            .mapToDouble(x -> x.getDuration())
+            .average();
     }
 
     @Override
     public Optional<String> longestSong() {
-        return null;
+        return songs.stream()
+            //.max((x, y) -> x.getDuration() > y.getDuration() ? 1 : -1)
+            .max(Comparator.comparingDouble(Song::getDuration))
+            .map(x -> x.getSongName());
     }
 
     @Override
     public Optional<String> longestAlbum() {
-        return null;
+        return albums.keySet().stream().sorted((a, b) ->
+            songs.stream().filter(x -> x.getAlbumName().get().equals(a)).mapToDouble(x -> x.getDuration()).sum() >
+            songs.stream().filter(x -> x.getAlbumName().get().equals(b)).mapToDouble(x -> x.getDuration()).sum() ?
+            1 : -1).findFirst();
+            //albums.keySet().stream().collect()
     }
 
     private static final class Song {
